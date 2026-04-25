@@ -12,6 +12,7 @@ pub fn run() {
         // As nossas rotas (Endpoints)
         .invoke_handler(tauri::generate_handler![
             commands::cmd_play_audio,
+            commands::cmd_get_all_assets,
             commands::cmd_scan_library,
         ])
         // O Ciclo de Vida da Aplicação

@@ -35,6 +35,7 @@ export function useLibraryCases() {
     assets,
     isFetchingAssets,
     fetchError,
+
     scanFolder,
     isScanning,
   }

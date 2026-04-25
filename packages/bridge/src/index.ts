@@ -6,6 +6,10 @@ export const AudioCommands = {
     return await invoke("cmd_play_audio", { assetId })
   },
 
+  getAllAssets: async (): Promise<string> => {
+    return await invoke("cmd_get_all_assets")
+  },
+
   scanLibrary: async (path: string): Promise<string> => {
     return await invoke("cmd_scan_library", { path })
   },

@@ -41,9 +41,10 @@ impl<A: AudioAnalyzer, R: MediaRepository> ScanDirectoryUseCase<A, R> {
                         AssetCategory::Music
                     };
 
-                    // 4. Cria a Entidade do Domínio
+                    let asset_id = Uuid::new_v5(&Uuid::NAMESPACE_URL, path_str.as_bytes());
+
                     let asset = MediaAsset {
-                        id: Uuid::new_v4(),
+                        id: asset_id,
                         path: path_str,
                         category,
                         metadata,

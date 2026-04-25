@@ -17,6 +17,9 @@ export const LibraryAdapter = {
   scanDirectory: async (path: string): Promise<ScanResult> => {
     try {
       const rawResponse = await AudioCommands.scanLibrary(path)
+
+      console.log({ rawResponse: JSON.parse(rawResponse) })
+
       return ScanResultSchema.parse(JSON.parse(rawResponse))
     } catch (error) {
       console.error("[LibraryAdapter] Falha de contrato ou IPC:", error)
@@ -28,6 +31,17 @@ export const LibraryAdapter = {
    * Busca todas as músicas já salvas no SurrealDB (simulação para o futuro)
    */
   getAllAssets: async (): Promise<MediaAsset[]> => {
-    return []
+    try {
+      const rawResponse = await AudioCommands.getAllAssets()
+
+      const parsedAssets = z
+        .array(MediaAssetSchema)
+        .parse(JSON.parse(rawResponse))
+
+      return parsedAssets
+    } catch (error) {
+      console.error("[LibraryAdapter] Falha ao buscar assets do banco:", error)
+      return []
+    }
   },
 }

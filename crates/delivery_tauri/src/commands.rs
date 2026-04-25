@@ -1,12 +1,18 @@
+use library::domain::traits::MediaRepository;
 use serde::Serialize;
+use tauri::State;
+
+// Importamos os nossos módulos de negócio (O "Core" da aplicação)
+use library::application::scan_directory::ScanDirectoryUseCase;
+use library::infrastructure::fs_analyzer::LocalFileSystemAnalyzer;
+use library::infrastructure::redb_repository::RedbMediaRepository;
 
 // =========================================================================
 // DTOs (Data Transfer Objects)
-// Estas estruturas espelham perfeitamente os schemas do Zod no frontend.
 // =========================================================================
 
 #[derive(Serialize)]
-#[serde(rename_all = "camelCase")] // MAGIA: Converte duration_seconds do Rust para durationSeconds no TS!
+#[serde(rename_all = "camelCase")]
 pub struct AudioMetadataDto {
     pub duration_seconds: u32,
     pub format: String,
@@ -34,34 +40,85 @@ pub struct ScanResultDto {
 // COMMANDS (Os "Endpoints" do Tauri)
 // =========================================================================
 
+// Adicione junto com os outros comandos:
 #[tauri::command]
-pub fn cmd_scan_library(path: String) -> Result<String, String> {
-    println!("[Backend] Iniciando varredura na pasta: {}", path);
+pub async fn cmd_get_all_assets(repo: State<'_, RedbMediaRepository>) -> Result<String, String> {
+    println!("[Backend] Buscando todas as músicas salvas no banco...");
 
-    // FUTURO: Aqui chamaremos o Use Case do crate `library`
-    // let use_case = state.library_use_cases.scan_directory;
-    // let result = use_case.execute(&path)?;
+    // 1. Busca os dados no banco usando a nossa trait do Domínio
+    let assets = repo.get_all().await?;
 
-    // MOCK: Simulando o retorno que o banco de dados daria
-    let mock_asset = MediaAssetDto {
-        id: "123e4567-e89b-12d3-a456-426614174000".to_string(),
-        path: format!("{}/minha_musica_incrivel.mp3", path),
-        category: "Music".to_string(),
-        metadata: AudioMetadataDto {
-            duration_seconds: 215,
-            format: "mp3".to_string(),
-            title: Some("Sinfonia do Rust".to_string()),
-            artist: Some("Tauri Band".to_string()),
-        },
+    // 2. Mapeia para o DTO (para o JSON ficar em camelCase pro TS)
+    let dto_assets: Vec<MediaAssetDto> = assets
+        .into_iter()
+        .map(|asset| MediaAssetDto {
+            id: asset.id.to_string(),
+            path: asset.path,
+            category: asset.category.to_string(),
+            metadata: AudioMetadataDto {
+                duration_seconds: asset.metadata.duration_seconds,
+                format: asset.metadata.format,
+                title: asset.metadata.title,
+                artist: asset.metadata.artist,
+            },
+        })
+        .collect();
+
+    // 3. Devolve como String JSON
+    serde_json::to_string(&dto_assets).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn cmd_scan_library(
+    path: String,
+    repo: State<'_, RedbMediaRepository>, // MAGIA DO TAURI: Injeção de Dependência automática!
+) -> Result<String, String> {
+    println!("[Backend] Iniciando varredura real na pasta: {}", path);
+
+    // 1. Instanciamos a Infraestrutura (O Leitor de Arquivos)
+    let analyzer = LocalFileSystemAnalyzer;
+
+    println!("[Backend] Analisando arquivos...");
+
+    // 2. Montamos o Use Case passando o Leitor e clonando a referência do Banco de Dados
+    let use_case = ScanDirectoryUseCase {
+        analyzer,
+        repository: (*repo).clone(),
     };
 
-    let result = ScanResultDto {
-        scanned_files: 1,
-        new_assets: vec![mock_asset],
+    println!("[Backend] Executando regra de negócio...");
+
+    // 3. Executamos a regra de negócio real! (.await porque salvar no banco é assíncrono)
+    let result = use_case.execute(&path).await?;
+
+    println!("[Backend] Mapeando entidades para DTOs...");
+
+    // 4. Mapeamos as Entidades do Domínio (Rust puro) para os DTOs (Formato JSON pro React)
+    let dto_assets: Vec<MediaAssetDto> = result
+        .new_assets
+        .into_iter()
+        .map(|asset| MediaAssetDto {
+            id: asset.id.to_string(),
+            path: asset.path,
+            category: asset.category.to_string(),
+            metadata: AudioMetadataDto {
+                duration_seconds: asset.metadata.duration_seconds,
+                format: asset.metadata.format,
+                title: asset.metadata.title,
+                artist: asset.metadata.artist,
+            },
+        })
+        .collect();
+
+    println!("[Backend] Criando estrutura de resposta...");
+
+    let result_dto = ScanResultDto {
+        scanned_files: result.scanned_files,
+        new_assets: dto_assets,
     };
 
-    // Converte a struct Rust em uma String JSON para o React fazer o parse() e o Zod validar
-    serde_json::to_string(&result).map_err(|e| e.to_string())
+    // 5. Serializamos para JSON e enviamos de volta pelo IPC Bridge
+    serde_json::to_string(&result_dto).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
