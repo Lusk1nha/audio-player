@@ -1,0 +1,10 @@
+[package]
+name = "delivery_tauri"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+library = { path = "../library" }
+playback = { path = "../playback" }
