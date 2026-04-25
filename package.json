@@ -1,0 +1,17 @@
+{
+  "name": "audio-player",
+  "version": "1.0.0",
+  "description": "Audio Player - Application to play audio files from local storage",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "build": "turbo build"
+  },
+  "packageManager": "pnpm@10.7.1",
+  "dependencies": {
+    "turbo": "^2.9.6",
+    "typescript": "^6.0.3"
+  }
+}
