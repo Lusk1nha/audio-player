@@ -8,4 +8,8 @@ export const AudioCommands = {
   scanLibrary: async (path: string): Promise<string> => {
     return await invoke("cmd_scan_library", { path })
   },
+
+  greet: async (name: string): Promise<string> => {
+    return await invoke("cmd_greet", { name })
+  },
 }

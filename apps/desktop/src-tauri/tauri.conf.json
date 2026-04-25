@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "identifier": "com.lucas.audio-player",
   "build": {
-    "beforeDevCommand": "pnpm dev",
+    "beforeDevCommand": "pnpm run dev:front",
+    "beforeBuildCommand": "pnpm run build:front",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "pnpm build",
     "frontendDist": "../dist"
   },
   "app": {
