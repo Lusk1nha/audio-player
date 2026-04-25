@@ -1,46 +1,40 @@
-// Importamos os comandos do nosso Adapter (Módulo Modular)
 use delivery_tauri::commands;
+use library::infrastructure::redb_repository::RedbMediaRepository;
+use std::fs;
 
-/// Estrutura de Estado Global da Aplicação (Injeção de Dependência)
-/// É aqui que no futuro guardaremos a conexão com o SurrealDB
-/// e as instâncias dos nossos Use Cases (DDD).
-pub struct AppState {
-    // Exemplo para o futuro:
-    // pub db_connection: Surreal<Db>,
-    // pub library_use_cases: LibraryUseCases,
-}
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Inicializamos o construtor do Tauri
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        // Plugins padrão
         .plugin(tauri_plugin_opener::init())
-        // 1. INJEÇÃO DE DEPENDÊNCIA:
-        // Compartilha o estado (banco, configs) com todos os comandos do Tauri
-        .manage(AppState {
-            // Inicializa as dependências aqui
-        })
-        // 2. REGISTRO DE ROTAS (Adapters):
-        // Conecta os comandos IPC do front-end com as funções do Rust
+        // As nossas rotas (Endpoints)
         .invoke_handler(tauri::generate_handler![
             commands::cmd_play_audio,
             commands::cmd_scan_library,
         ])
-        // 3. CICLO DE VIDA (Setup):
-        // Roda regras pesadas (ex: migrações de banco) antes da UI abrir
-        .setup(|_app| {
-            // let app_handle = app.handle();
-            // log::info!("Inicializando o Universal Audio Manager...");
+        // O Ciclo de Vida da Aplicação
+        .setup(|app| {
+            let mut db_path = app
+                .path()
+                .app_data_dir()
+                .expect("Falha ao encontrar pasta AppData");
 
-            // Aqui você pode configurar atalhos de teclado globais,
-            // ler arquivos de configuração do OS, etc.
+            fs::create_dir_all(&db_path).expect("Falha ao criar diretório do aplicativo");
 
-            println!("✅ Backend Rust inicializado com sucesso!");
+            db_path.push("library.redb");
+            let db_path_str = db_path.to_str().expect("Caminho inválido");
+
+            let repository = RedbMediaRepository::new(db_path_str)
+                .expect("Falha crítica ao iniciar o banco de dados Redb");
+
+            app.manage(repository);
+
+            println!("✅ Backend Rust e Banco de Dados inicializados com sucesso!");
+            println!("📁 Banco salvo em: {}", db_path_str);
             Ok(())
         })
-        // Executa o loop da aplicação
         .run(tauri::generate_context!())
         .expect("Falha crítica ao iniciar o Universal Audio Manager");
 }

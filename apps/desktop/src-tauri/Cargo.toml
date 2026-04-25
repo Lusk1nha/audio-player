@@ -23,3 +23,4 @@ serde_json = { workspace = true }
 
 # --- INJEÇÃO DA NOSSA ARQUITETURA MODULAR ---
 delivery_tauri = { path = "../../../crates/delivery_tauri" }
+library = { path = "../../../crates/library" }
