@@ -1,6 +1,8 @@
 /// <reference types="vitest" />
 import { defineConfig } from "vitest/config"
+
 import react from "@vitejs/plugin-react"
+import tailwindcss from "@tailwindcss/vite"
 
 import path from "path"
 
@@ -8,7 +10,7 @@ const host = process.env.TAURI_DEV_HOST
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
 
   resolve: {
     alias: {
@@ -20,6 +22,13 @@ export default defineConfig(async () => ({
   //
   // 1. prevent Vite from obscuring rust errors
   clearScreen: false,
+
+  test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: "./src/test/setup.ts",
+    css: true,
+  },
 
   // 2. tauri expects a fixed port, fail if that port is not available
   server: {

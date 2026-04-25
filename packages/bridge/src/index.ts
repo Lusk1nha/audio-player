@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core"
+import { open } from "@tauri-apps/plugin-dialog"
 
 export const AudioCommands = {
   playAudio: async (assetId: string): Promise<string> => {
@@ -9,7 +10,14 @@ export const AudioCommands = {
     return await invoke("cmd_scan_library", { path })
   },
 
-  greet: async (name: string): Promise<string> => {
-    return await invoke("cmd_greet", { name })
+  // Abre a janela nativa do OS
+  selectFolder: async (): Promise<string | null> => {
+    const selectedPath = await open({
+      directory: true,
+      multiple: false,
+      title: "Selecione a pasta de músicas",
+    })
+
+    return selectedPath as string | null
   },
 }
