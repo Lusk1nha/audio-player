@@ -1,4 +1,7 @@
 use library::domain::traits::MediaRepository;
+use playback::domain::traits::AudioPlayer;
+use playback::infrastructure::rodio_player::RodioAudioPlayer;
+
 use serde::Serialize;
 use tauri::State;
 
@@ -121,14 +124,52 @@ pub async fn cmd_scan_library(
     serde_json::to_string(&result_dto).map_err(|e| e.to_string())
 }
 
+// =========================================================================
+// COMMANDS DE PLAYBACK (Áudio)
+// =========================================================================
+
 #[tauri::command]
-pub fn cmd_play_audio(asset_id: String) -> Result<String, String> {
-    println!("[Backend] Solicitado o início do áudio ID: {}", asset_id);
+pub fn cmd_play_audio(
+    path: String, // Note: Recebemos o caminho físico do arquivo, não apenas o ID
+    player: State<'_, RodioAudioPlayer>, // Injeção de dependência automática!
+) -> Result<String, String> {
+    println!("[Backend] Solicitado o início do áudio: {}", path);
 
-    // FUTURO: Chamar o Use Case do crate `playback`
+    // Chama a regra de negócio do crate playback
+    player.play(&path).map_err(|e| e.to_string())?;
 
-    Ok(format!(
-        "Sinal enviado para o motor de áudio. Tocando {}",
-        asset_id
-    ))
+    Ok(format!("Tocando {}", path))
+}
+
+#[tauri::command]
+pub fn cmd_pause_audio(player: State<'_, RodioAudioPlayer>) -> Result<(), String> {
+    println!("[Backend] Pausando áudio");
+    player.pause().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn cmd_resume_audio(player: State<'_, RodioAudioPlayer>) -> Result<(), String> {
+    println!("[Backend] Retomando áudio");
+    player.resume().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn cmd_stop_audio(player: State<'_, RodioAudioPlayer>) -> Result<(), String> {
+    println!("[Backend] Parando áudio");
+    player.stop().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn cmd_seek_audio(
+    position_seconds: u64,
+    player: State<'_, RodioAudioPlayer>,
+) -> Result<(), String> {
+    println!("[Backend] Pulando para {} segundos", position_seconds);
+    player.seek(position_seconds).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn cmd_set_volume(volume: f32, player: State<'_, RodioAudioPlayer>) -> Result<(), String> {
+    println!("[Backend] Alterando volume para: {}", volume);
+    player.set_volume(volume).map_err(|e| e.to_string())
 }

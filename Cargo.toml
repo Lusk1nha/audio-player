@@ -6,4 +6,7 @@ members = ["apps/desktop/src-tauri", "crates/*"]
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = { version = "1.0.149" }
 
+thiserror = { version = "2.0.18" }
+
+
 uuid = { version = "1.23.1", features = ["v4", "v5", "serde"] }

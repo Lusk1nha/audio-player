@@ -1,24 +1,22 @@
-import { Button } from "@audio-player/ui/components/button"
-import { usePlayerStore } from "@/modules/playback/application/usePlayerStore"
+import { motion } from "motion/react"
+
+import { TrackInfo } from "./components/TrackInfo"
+import { PlaybackControls } from "./components/PlaybackControls"
+import { VolumeControl } from "./components/VolumeControl"
 
 export function PlayerBar() {
-  const { currentTrackId, isPlaying, play } = usePlayerStore()
-
-  const handlePlayClick = () => {
-    play("uuid-da-musica-123")
-  }
-
   return (
-    <div className="flex items-center justify-between bg-gray-900 p-4 text-white">
-      <div>
-        <span>Tocando agora: {currentTrackId || "Nenhuma"}</span>
-      </div>
+    <motion.div
+      initial={{ y: 50, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 260, damping: 20 }}
+      className="relative flex h-full w-full items-center justify-between overflow-hidden bg-card px-4 py-2 shadow-md sm:px-6"
+    >
+      <div className="absolute top-0 right-0 left-0 h-px bg-linear-to-r from-transparent via-primary/50 to-transparent" />
 
-      <div className="controls">
-        <Button onClick={handlePlayClick}>
-          {isPlaying ? "Pausar" : "Tocar"}
-        </Button>
-      </div>
-    </div>
+      <TrackInfo />
+      <PlaybackControls />
+      <VolumeControl />
+    </motion.div>
   )
 }

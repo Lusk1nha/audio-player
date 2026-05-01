@@ -33,4 +33,6 @@ pub struct MediaAsset {
     pub path: String,
     pub category: AssetCategory,
     pub metadata: AudioMetadata,
+    pub filename: String,
+    pub last_modified: u64,
 }

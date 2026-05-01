@@ -5,3 +5,5 @@ edition = "2021"
 
 
 [dependencies]
+rodio = { version = "0.22.2", features = ["symphonia-all"] }
+thiserror = { workspace = true }

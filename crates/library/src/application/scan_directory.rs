@@ -43,11 +43,24 @@ impl<A: AudioAnalyzer, R: MediaRepository> ScanDirectoryUseCase<A, R> {
 
                     let asset_id = Uuid::new_v5(&Uuid::NAMESPACE_URL, path_str.as_bytes());
 
+                    let file_name = entry.file_name().to_string_lossy().into_owned();
+
+                    let last_modified = entry
+                        .metadata()
+                        .map(|m| {
+                            m.modified().map_or(0, |t| {
+                                t.duration_since(std::time::UNIX_EPOCH).unwrap().as_secs()
+                            })
+                        })
+                        .unwrap_or(0);
+
                     let asset = MediaAsset {
                         id: asset_id,
                         path: path_str,
                         category,
                         metadata,
+                        filename: file_name,
+                        last_modified,
                     };
 
                     new_assets.push(asset);

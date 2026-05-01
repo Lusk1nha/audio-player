@@ -11,6 +11,8 @@ pub struct MediaAssetRecord {
     pub format: String,
     pub title: Option<String>,
     pub artist: Option<String>,
+    pub filename: String,
+    pub last_modified: u64,
 }
 
 // Convertendo do Domínio para o Banco de Dados
@@ -24,6 +26,8 @@ impl From<MediaAsset> for MediaAssetRecord {
             format: asset.metadata.format,
             title: asset.metadata.title,
             artist: asset.metadata.artist,
+            filename: asset.filename,
+            last_modified: asset.last_modified,
         }
     }
 }
@@ -42,6 +46,8 @@ impl From<MediaAssetRecord> for MediaAsset {
                 "Music" => AssetCategory::Music,
                 _ => AssetCategory::Uncategorized,
             },
+            filename: record.filename,
+            last_modified: record.last_modified,
             metadata: AudioMetadata {
                 duration_seconds: record.duration_seconds,
                 format: record.format,

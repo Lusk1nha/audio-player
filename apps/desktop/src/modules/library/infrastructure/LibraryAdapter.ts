@@ -11,9 +11,6 @@ const ScanResultSchema = z.object({
 export type ScanResult = z.infer<typeof ScanResultSchema>
 
 export const LibraryAdapter = {
-  /**
-   * Dispara a varredura e obriga o retorno a respeitar o contrato (ScanResultSchema)
-   */
   scanDirectory: async (path: string): Promise<ScanResult> => {
     try {
       const rawResponse = await AudioCommands.scanLibrary(path)
@@ -27,9 +24,6 @@ export const LibraryAdapter = {
     }
   },
 
-  /**
-   * Busca todas as músicas já salvas no SurrealDB (simulação para o futuro)
-   */
   getAllAssets: async (): Promise<MediaAsset[]> => {
     try {
       const rawResponse = await AudioCommands.getAllAssets()
