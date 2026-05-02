@@ -4,6 +4,7 @@ import { LibraryView } from "../../modules/library/presentation/LibraryView"
 
 // Atualizamos o Placeholder para respeitar o tema global (bg-background, text-muted-foreground)
 import { WarningCircleIcon } from "@phosphor-icons/react"
+import { SettingsView } from "@/modules/settings/presentation/SettingsView"
 
 export const PlaceholderView = ({
   title,
@@ -58,12 +59,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "settings",
-        element: (
-          <PlaceholderView
-            title="Configurações do Sistema"
-            route="config.toml"
-          />
-        ),
+        element: <SettingsView />,
       },
     ],
   },

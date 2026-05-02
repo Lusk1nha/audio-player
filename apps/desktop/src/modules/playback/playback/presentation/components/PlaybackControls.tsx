@@ -6,7 +6,7 @@ import {
   PlayIcon,
   SkipBackIcon,
 } from "@phosphor-icons/react"
-import { motion } from "motion/react"
+import { AnimatePresence, motion } from "motion/react"
 import { usePlayerStore } from "@/modules/playback/application/usePlayerStore"
 import { cn } from "@audio-player/ui/lib/utils"
 
@@ -25,6 +25,8 @@ export function PlaybackControls() {
     seekTo,
     currentTime,
     setCurrentTime,
+    playPrevious,
+    playNext,
   } = usePlayerStore()
 
   const [isDragging, setIsDragging] = useState(false)
@@ -113,39 +115,63 @@ export function PlaybackControls() {
       {/* Botões de Controle */}
       <div className="flex items-center gap-4">
         <motion.button
-          whileTap={{ scale: 0.85 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           disabled={!currentTrack}
-          className="text-muted-foreground transition hover:text-primary disabled:opacity-50"
+          onClick={playPrevious}
+          className="group flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary disabled:cursor-not-allowed disabled:opacity-30"
+          title="Anterior [Alt+←]"
         >
-          <SkipBackIcon weight="fill" size={18} />
+          <SkipBackIcon weight="fill" size={20} />
         </motion.button>
 
-        <motion.div whileTap={{ scale: 0.95 }}>
+        <motion.div className="relative" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
             onClick={togglePlay}
             disabled={!currentTrack}
             className={cn(
-              "flex h-9 w-12 items-center justify-center rounded-md border p-0 transition-all duration-200",
+              "relative z-10 flex h-11 w-11 items-center justify-center rounded-lg border-2 p-0 transition-all duration-300",
               isPlaying
-                ? "border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--color-primary),0.3)] hover:bg-primary/20"
-                : "border-foreground bg-foreground text-background hover:bg-foreground/90",
-              "disabled:border-muted disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
+                ? "border-primary bg-primary/15 text-primary shadow-[0_0_20px_rgba(var(--color-primary),0.25)] hover:bg-primary/25"
+                : "border-foreground bg-foreground text-background hover:opacity-90",
+              "disabled:border-border disabled:bg-muted/50 disabled:text-muted-foreground disabled:shadow-none"
             )}
           >
-            {isPlaying ? (
-              <PauseIcon weight="bold" size={18} />
-            ) : (
-              <PlayIcon weight="bold" size={18} />
-            )}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={isPlaying ? "pause" : "play"}
+                initial={{
+                  opacity: 0,
+                  scale: 0.5,
+                  rotate: isPlaying ? -90 : 90,
+                }}
+                animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                exit={{ opacity: 0, scale: 0.5, rotate: isPlaying ? 90 : -90 }}
+                transition={{ duration: 0.15 }}
+              >
+                {isPlaying ? (
+                  <PauseIcon weight="bold" size={18} />
+                ) : (
+                  <PlayIcon weight="bold" size={18} />
+                )}
+              </motion.div>
+            </AnimatePresence>
           </Button>
+
+          {isPlaying && (
+            <span className="absolute inset-0 z-0 animate-ping rounded-lg bg-primary/20 duration-2000" />
+          )}
         </motion.div>
 
         <motion.button
-          whileTap={{ scale: 0.85 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           disabled={!currentTrack}
-          className="text-muted-foreground transition hover:text-primary disabled:opacity-50"
+          onClick={playNext}
+          className="group flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary disabled:cursor-not-allowed disabled:opacity-30"
+          title="Próxima [Alt+→]"
         >
-          <SkipForwardIcon weight="fill" size={18} />
+          <SkipForwardIcon weight="fill" size={20} />
         </motion.button>
       </div>
 

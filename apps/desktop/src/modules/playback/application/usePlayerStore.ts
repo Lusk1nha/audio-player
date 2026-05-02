@@ -2,28 +2,39 @@ import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 import { PlaybackAdapter } from "../infrastructure/PlaybackAdapter"
 import type { MediaAsset } from "@/modules/library/domain/MediaAsset"
+
 import { toast } from "sonner"
 
 interface PlayerState {
   currentTrack: MediaAsset | null
   isPlaying: boolean
-  volume: number // Volume global entre 0.0 e 1.0
-  queue: MediaAsset[] // Preparando o terreno para a Fila!
+  volume: number
+  queue: MediaAsset[]
+  history: MediaAsset[]
   currentTime: number
 
-  // Ações
-  init: () => Promise<void> // Sincroniza o volume salvo com o Rust ao abrir o app
-  play: (track: MediaAsset) => Promise<void>
+  // Ações de Estado
+  init: () => Promise<void>
+
+  // Ações Principais
+  play: (track: MediaAsset, isFromHistory?: boolean) => Promise<void>
   pause: () => Promise<void>
   resume: () => Promise<void>
   togglePlay: () => Promise<void>
   stop: () => Promise<void>
   seekTo: (seconds: number) => Promise<void>
   setVolume: (volume: number) => Promise<void>
-  setCurrentTime: (time: number) => void // Atualiza o relógio
+  setCurrentTime: (time: number) => void
 
-  // Ações da Fila (Futuro)
+  // Ações da Fila
   addToQueue: (track: MediaAsset) => void
+  removeFromQueue: (index: number) => void
+  clearQueue: () => void
+  setQueue: (newQueue: MediaAsset[]) => void
+  reorderQueue: (startIndex: number, endIndex: number) => void
+
+  // Ações de Navegação
+  playPrevious: () => Promise<void>
   playNext: () => Promise<void>
 }
 
@@ -34,6 +45,7 @@ export const usePlayerStore = create<PlayerState>()(
       isPlaying: false,
       volume: 0.7,
       queue: [],
+      history: [],
       currentTime: 0,
 
       init: async () => {
@@ -49,10 +61,16 @@ export const usePlayerStore = create<PlayerState>()(
         }
       },
 
-      play: async (track: MediaAsset) => {
+      play: async (track: MediaAsset, isFromHistory: boolean = false) => {
         try {
+          const { currentTrack, history, volume } = get()
+
+          if (currentTrack && currentTrack.id !== track.id && !isFromHistory) {
+            set({ history: [...history, currentTrack] })
+          }
+
           await PlaybackAdapter.playTrack(track.path)
-          await PlaybackAdapter.setVolume(get().volume)
+          await PlaybackAdapter.setVolume(volume)
 
           set({ currentTrack: track, isPlaying: true, currentTime: 0 })
         } catch (error) {
@@ -125,17 +143,74 @@ export const usePlayerStore = create<PlayerState>()(
       },
 
       addToQueue: (track: MediaAsset) => {
-        set((state) => ({ queue: [...state.queue, track] }))
+        if (!get().currentTrack) {
+          get().play(track)
+        } else {
+          set((state) => ({ queue: [...state.queue, track] }))
+          toast.success("Adicionado à fila", {
+            description: track.metadata.title,
+          })
+        }
+      },
+
+      removeFromQueue: (index: number) => {
+        set((state) => ({
+          queue: state.queue.filter((_, i) => i !== index),
+        }))
+      },
+
+      clearQueue: () => {
+        set({ queue: [] })
+        toast.success("Fila limpa")
+      },
+
+      setQueue: (newQueue: MediaAsset[]) => {
+        set({ queue: newQueue })
+      },
+
+      reorderQueue: (startIndex: number, endIndex: number) => {
+        set((state) => {
+          const newQueue = Array.from(state.queue)
+          const [movedTrack] = newQueue.splice(startIndex, 1)
+          newQueue.splice(endIndex, 0, movedTrack)
+          return { queue: newQueue }
+        })
+      },
+
+      playPrevious: async () => {
+        const { currentTime, history, currentTrack, queue, play, seekTo } =
+          get()
+
+        if (currentTime > 3 || history.length === 0) {
+          await seekTo(0)
+          return
+        }
+
+        const previousTrack = history[history.length - 1]
+
+        if (currentTrack) {
+          set({
+            history: history.slice(0, -1),
+            queue: [currentTrack, ...queue],
+          })
+        } else {
+          set({ history: history.slice(0, -1) })
+        }
+
+        await play(previousTrack, true)
       },
 
       playNext: async () => {
-        const { queue, play } = get()
+        const { queue, play, stop } = get()
 
         if (queue.length > 0) {
           const nextTrack = queue[0]
 
           set((state) => ({ queue: state.queue.slice(1) }))
+
           await play(nextTrack)
+        } else {
+          await stop()
         }
       },
     }),
@@ -147,6 +222,7 @@ export const usePlayerStore = create<PlayerState>()(
         volume: state.volume,
         currentTrack: state.currentTrack,
         queue: state.queue,
+        history: state.history,
         currentTime: state.currentTime,
       }),
     }

@@ -1,8 +1,8 @@
 use delivery_tauri::commands;
 use library::infrastructure::redb_repository::RedbMediaRepository;
+use library::infrastructure::settings_repository::SettingsRepository; // <- IMPORT NOVO
 use playback::infrastructure::rodio_player::RodioAudioPlayer;
 use std::fs;
-
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -21,45 +21,38 @@ pub fn run() {
             commands::cmd_stop_audio,
             commands::cmd_seek_audio,
             commands::cmd_set_volume,
-            commands::cmd_load_audio
+            commands::cmd_load_audio,
+            // commands settings
+            commands::cmd_get_settings,
+            commands::cmd_update_settings,
         ])
-        // O Ciclo de Vida da Aplicação
         .setup(|app| {
-            // --- 1. SETUP DO BANCO DE DADOS ---
-            let mut db_path = app
+            let app_data_dir = app
                 .path()
                 .app_data_dir()
-                .expect("Falha fatal: O sistema operacional negou acesso à pasta AppData.");
+                .expect("Falha ao encontrar pasta AppData");
 
-            fs::create_dir_all(&db_path)
-                .expect("Falha fatal: Sem permissão para criar a pasta do aplicativo.");
+            fs::create_dir_all(&app_data_dir).expect("Falha ao criar diretório do aplicativo");
 
+            // 1. SETUP REDB (Library)
+            let mut db_path = app_data_dir.clone();
             db_path.push("library.redb");
-            let db_path_str = db_path.to_str().expect("Caminho de arquivo inválido no SO");
+            
+            let repository = RedbMediaRepository::new(db_path.to_str().unwrap())
+                .expect("Falha crítica ao iniciar o Redb");
+            app.manage(repository);
 
-            // Tratamento elegante do nosso LibraryError
-            let repository = match RedbMediaRepository::new(db_path_str) {
-                Ok(repo) => repo,
-                Err(e) => {
-                    // Imprime o erro formatado bonitinho que definimos no thiserror
-                    eprintln!("❌ Falha crítica ao iniciar o banco de dados: {}", e);
-                    // Encerra o app graciosamente com código de erro 1
-                    std::process::exit(1);
-                }
-            };
-
-            app.manage(repository); // Injeta o banco
-
-            // --- 2. SETUP DO MOTOR DE ÁUDIO ---
-            // Cria apenas o transmissor (A thread pesada só nasce no primeiro Play)
+            // 2. SETUP AUDIO MOTOR
             let audio_player = RodioAudioPlayer::new();
-            app.manage(audio_player); // Injeta o motor de áudio
+            app.manage(audio_player);
 
-            println!("✅ Backend Rust inicializado com sucesso!");
-            println!("📁 Banco salvo em: {}", db_path_str);
+            // 3. SETUP SETTINGS (Novo!)
+            let settings_repo = SettingsRepository::new(&app_data_dir);
+            app.manage(settings_repo); // Injeta o repositório
 
+            println!("✅ Backend inicializado com sucesso!");
             Ok(())
         })
         .run(tauri::generate_context!())
-        .expect("Falha crítica ao iniciar o motor interno do Tauri");
+        .expect("Falha crítica ao iniciar o Universal Audio Manager");
 }

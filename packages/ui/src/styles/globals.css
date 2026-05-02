@@ -187,8 +187,45 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+
+    /* Suporte padrão e Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* =========================================
+     CUSTOM SCROLLBAR (Webkit/Blink - Chrome, Edge, Safari, Tauri)
+     ========================================= */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    /* Usamos a cor do border por padrão para ser sutil */
+    background-color: var(--border);
+    border-radius: 9999px;
+    /* O truque do "Falso Padding": uma borda sólida da mesma cor do fundo cria um espaço vazado em volta da scrollbar */
+    border: 3px solid var(--background);
+    /* Define o modo de comportamento da borda interna */
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    /* Fica mais escura/evidente no hover (estilo VS Code) */
+    background-color: var(--muted-foreground);
+  }
+
+  /* O quadradinho que fica na junção de duas scrollbars (X e Y) */
+  ::-webkit-scrollbar-corner {
+    background: transparent;
   }
 }

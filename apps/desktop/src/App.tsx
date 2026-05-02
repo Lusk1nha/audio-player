@@ -5,6 +5,7 @@ import { queryClient } from "./shared/lib/QueryClient"
 import { ThemeProvider } from "./core/providers/theme-provider"
 import { useEffect } from "react"
 import { usePlayerStore } from "./modules/playback/application/usePlayerStore"
+import { Toaster } from "sonner"
 
 export function App() {
   const initPlayer = usePlayerStore((state) => state.init)
@@ -17,6 +18,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider storageKey="audio-player-theme" defaultTheme="system">
         <RouterProvider router={router} />
+        <Toaster position="top-right" theme="dark" />
       </ThemeProvider>
     </QueryClientProvider>
   )

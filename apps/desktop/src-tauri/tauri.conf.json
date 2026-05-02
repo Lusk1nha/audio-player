@@ -15,8 +15,8 @@
         "title": "Audio Manager",
         "width": 1024,
         "height": 768,
-        "minWidth": 800,
-        "minHeight": 600,
+        "minWidth": 350,
+        "minHeight": 350,
         "resizable": true,
         "fullscreen": false
       }

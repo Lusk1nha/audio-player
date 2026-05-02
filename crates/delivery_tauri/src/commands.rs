@@ -1,3 +1,4 @@
+use library::infrastructure::settings_repository::{SettingsDto, SettingsRepository};
 use tauri::State;
 
 use library::domain::traits::MediaRepository;
@@ -17,7 +18,8 @@ use library::infrastructure::redb_repository::RedbMediaRepository;
 #[tauri::command]
 pub async fn cmd_get_all_assets(
     repo: State<'_, RedbMediaRepository>,
-) -> Result<Vec<MediaAsset>, String> { // Retornamos o Vec nativo do Rust!
+) -> Result<Vec<MediaAsset>, String> {
+    // Retornamos o Vec nativo do Rust!
     println!("[Backend] Buscando todas as músicas salvas no banco...");
 
     // O Tauri vai serializar o Vec<MediaAsset> para JSON automaticamente
@@ -28,7 +30,8 @@ pub async fn cmd_get_all_assets(
 pub async fn cmd_scan_library(
     path: String,
     repo: State<'_, RedbMediaRepository>,
-) -> Result<ScanResult, String> { // Retornamos o ScanResult nativo!
+) -> Result<ScanResult, String> {
+    // Retornamos o ScanResult nativo!
     println!("[Backend] Iniciando varredura real na pasta: {}", path);
 
     let analyzer = LocalFileSystemAnalyzer;
@@ -46,10 +49,7 @@ pub async fn cmd_scan_library(
 // =========================================================================
 
 #[tauri::command]
-pub fn cmd_play_audio(
-    path: String,
-    player: State<'_, RodioAudioPlayer>,
-) -> Result<String, String> {
+pub fn cmd_play_audio(path: String, player: State<'_, RodioAudioPlayer>) -> Result<String, String> {
     println!("[Backend] Solicitado o início do áudio: {}", path);
     player.play(&path).map_err(|e| e.to_string())?;
     Ok(format!("Tocando {}", path))
@@ -101,4 +101,25 @@ pub fn cmd_load_audio(
     player
         .load_track(&path, position_seconds)
         .map_err(|e| e.to_string())
+}
+
+// =========================================================================
+// COMMANDS DE CONFIGURAÇÕES
+// =========================================================================
+
+#[tauri::command]
+pub fn cmd_get_settings(repo: State<'_, SettingsRepository>) -> Result<String, String> {
+    println!("[Backend] Lendo config.toml...");
+    let settings = repo.get()?;
+
+    serde_json::to_string(&settings).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn cmd_update_settings(
+    payload: SettingsDto,
+    repo: State<'_, SettingsRepository>,
+) -> Result<(), String> {
+    println!("[Backend] Salvando novas configurações no config.toml...");
+    repo.save(&payload)
 }
