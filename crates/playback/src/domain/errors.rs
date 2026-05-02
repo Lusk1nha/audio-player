@@ -12,4 +12,6 @@ pub enum PlaybackError {
     EngineLockFailed,
     #[error("Falha ao pular tempo da música: {0}")]
     SeekFailed(String),
+    #[error("Falha ao comunicar com a Thread do Motor de Áudio.")]
+    EngineCommunicationFailed,
 }

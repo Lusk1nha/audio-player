@@ -6,7 +6,7 @@ use uuid::Uuid;
 pub struct MediaAssetRecord {
     pub id: String,
     pub path: String,
-    pub category: String,
+    pub category: AssetCategory,
     pub duration_seconds: u32,
     pub format: String,
     pub title: Option<String>,
@@ -15,13 +15,12 @@ pub struct MediaAssetRecord {
     pub last_modified: u64,
 }
 
-// Convertendo do Domínio para o Banco de Dados
 impl From<MediaAsset> for MediaAssetRecord {
     fn from(asset: MediaAsset) -> Self {
         Self {
-            id: format!("media_asset:{}", asset.id),
+            id: asset.id.to_string(),
             path: asset.path,
-            category: asset.category.to_string(),
+            category: asset.category,
             duration_seconds: asset.metadata.duration_seconds,
             format: asset.metadata.format,
             title: asset.metadata.title,
@@ -32,20 +31,15 @@ impl From<MediaAsset> for MediaAssetRecord {
     }
 }
 
-// Convertendo do Banco de Dados de volta para o Domínio
-impl From<MediaAssetRecord> for MediaAsset {
-    fn from(record: MediaAssetRecord) -> Self {
-        let raw_uuid = record.id.replace("media_asset:", "");
+impl TryFrom<MediaAssetRecord> for MediaAsset {
+    type Error = uuid::Error;
 
-        MediaAsset {
-            id: Uuid::parse_str(&raw_uuid).unwrap_or_else(|_| Uuid::new_v4()),
+    // Usamos TryFrom porque o UUID no banco pode estar corrompido, e não queremos um panic! (unwrap)
+    fn try_from(record: MediaAssetRecord) -> Result<Self, Self::Error> {
+        Ok(MediaAsset {
+            id: Uuid::parse_str(&record.id)?,
             path: record.path,
-            category: match record.category.as_str() {
-                "Podcast" => AssetCategory::Podcast,
-                "VoiceMessage" => AssetCategory::VoiceMessage,
-                "Music" => AssetCategory::Music,
-                _ => AssetCategory::Uncategorized,
-            },
+            category: record.category,
             filename: record.filename,
             last_modified: record.last_modified,
             metadata: AudioMetadata {
@@ -54,6 +48,6 @@ impl From<MediaAssetRecord> for MediaAsset {
                 title: record.title,
                 artist: record.artist,
             },
-        }
+        })
     }
 }

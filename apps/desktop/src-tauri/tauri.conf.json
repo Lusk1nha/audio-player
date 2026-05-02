@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "desktop",
+  "productName": "Audio Manager",
   "version": "0.1.0",
   "identifier": "com.lucas.audio-player",
   "build": {
@@ -12,13 +12,18 @@
   "app": {
     "windows": [
       {
-        "title": "desktop",
-        "width": 800,
-        "height": 600
+        "title": "Audio Manager",
+        "width": 1024,
+        "height": 768,
+        "minWidth": 800,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; img-src 'self' asset: https:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' ipc: http://localhost:*",
+      "capabilities": ["default"]
     }
   },
   "bundle": {
@@ -30,6 +35,16 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "externalBin": [],
+    "copyright": "Copyright © 2024 Lucas",
+    "category": "Music",
+    "shortDescription": "Um player de áudio moderno focado em performance e DDD.",
+    "longDescription": "Universal Audio Manager é um player de música construído com Rust e React, utilizando arquitetura limpa e alta performance.",
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    }
   }
 }

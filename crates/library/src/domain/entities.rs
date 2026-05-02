@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AudioMetadata {
     pub duration_seconds: u32,
     pub format: String,
@@ -8,7 +10,7 @@ pub struct AudioMetadata {
     pub artist: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum AssetCategory {
     Music,
     Podcast,
@@ -16,18 +18,8 @@ pub enum AssetCategory {
     Uncategorized,
 }
 
-impl ToString for AssetCategory {
-    fn to_string(&self) -> String {
-        match self {
-            AssetCategory::Music => "Music".to_string(),
-            AssetCategory::Podcast => "Podcast".to_string(),
-            AssetCategory::VoiceMessage => "VoiceMessage".to_string(),
-            AssetCategory::Uncategorized => "Uncategorized".to_string(),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MediaAsset {
     pub id: Uuid,
     pub path: String,
@@ -35,4 +27,15 @@ pub struct MediaAsset {
     pub metadata: AudioMetadata,
     pub filename: String,
     pub last_modified: u64,
+}
+
+impl AssetCategory {
+    pub fn infer_from_metadata(metadata: &AudioMetadata) -> Self {
+        // Se tiver mais de 30 minutos (1800 segundos), inferimos como Podcast.
+        if metadata.duration_seconds > 1800 {
+            AssetCategory::Podcast
+        } else {
+            AssetCategory::Music
+        }
+    }
 }

@@ -23,8 +23,6 @@ export function AssetCard({
   isPlaying,
   onClick,
 }: AssetCardProps) {
-  console.log(asset)
-
   return (
     <motion.article
       variants={assetCardVariants}

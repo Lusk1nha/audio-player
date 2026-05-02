@@ -18,36 +18,39 @@ import {
 } from "@audio-player/ui/components/tooltip"
 
 export function PlaybackControls() {
-  const { currentTrack, isPlaying, togglePlay, seekTo } = usePlayerStore()
+  const {
+    currentTrack,
+    isPlaying,
+    togglePlay,
+    seekTo,
+    currentTime,
+    setCurrentTime,
+  } = usePlayerStore()
 
-  const [currentTime, setCurrentTime] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
 
   const [hoverTime, setHoverTime] = useState<number | null>(null)
   const [hoverOffset, setHoverOffset] = useState(0)
 
   useEffect(() => {
-    setCurrentTime(0)
-  }, [currentTrack?.id])
-  
-  useEffect(() => {
     let interval: number
 
     if (isPlaying && !isDragging) {
-      interval = setInterval(() => {
-        setCurrentTime((prev) => {
-          const maxDuration = currentTrack?.metadata.durationSeconds || 0
-          if (prev >= maxDuration && maxDuration > 0) {
-            clearInterval(interval)
-            return maxDuration
-          }
-          return prev + 1
-        })
+      interval = window.setInterval(() => {
+        const maxDuration = currentTrack?.metadata.durationSeconds || 0
+        const nextTime = currentTime + 1
+
+        if (nextTime >= maxDuration && maxDuration > 0) {
+          clearInterval(interval)
+          setCurrentTime(maxDuration)
+        } else {
+          setCurrentTime(nextTime)
+        }
       }, 1000)
     }
 
     return () => clearInterval(interval)
-  }, [isPlaying, currentTrack, isDragging])
+  }, [isPlaying, isDragging, currentTrack, currentTime, setCurrentTime])
 
   const formatTime = (seconds?: number) => {
     if (!seconds || isNaN(seconds)) return "0:00"

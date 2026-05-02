@@ -1,9 +1,13 @@
+use serde::Serialize;
 use uuid::Uuid;
 use walkdir::WalkDir;
 
 use crate::domain::entities::{AssetCategory, MediaAsset};
+use crate::domain::errors::LibraryError;
 use crate::domain::traits::{AudioAnalyzer, MediaRepository};
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ScanResult {
     pub scanned_files: u32,
     pub new_assets: Vec<MediaAsset>,
@@ -15,42 +19,46 @@ pub struct ScanDirectoryUseCase<A: AudioAnalyzer, R: MediaRepository> {
 }
 
 impl<A: AudioAnalyzer, R: MediaRepository> ScanDirectoryUseCase<A, R> {
-    pub async fn execute(&self, directory_path: &str) -> Result<ScanResult, String> {
+    pub async fn execute(&self, directory_path: &str) -> Result<ScanResult, LibraryError> {
         let mut new_assets = Vec::new();
         let mut files_scanned = 0;
 
-        // 1. Usa o walkdir para ler a pasta recursivamente (muito rápido)
+        // Lista de formatos suportados
+        let supported_extensions = ["mp3", "wav", "flac", "m4a", "ogg"];
+
         for entry in WalkDir::new(directory_path)
             .into_iter()
-            .filter_map(Result::ok) // Ignora pastas sem permissão
+            .filter_map(Result::ok)
             .filter(|e| e.file_type().is_file())
         {
-            let path_str = entry.path().to_string_lossy().to_string();
+            let path = entry.path();
 
-            // Filtra apenas arquivos de áudio
-            if path_str.ends_with(".mp3")
-                || path_str.ends_with(".wav")
-                || path_str.ends_with(".flac")
-            {
-                // 2. Extrai Metadados usando a interface (Inversão de Dependência)
+            // Pega a extensão do arquivo de forma segura e transforma em lowercase
+            let is_audio = path
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .map(|ext| supported_extensions.contains(&ext.to_lowercase().as_str()))
+                .unwrap_or(false);
+
+            if is_audio {
+                let path_str = path.to_string_lossy().to_string();
+
+                // 1. Extrai Metadados
                 if let Ok(metadata) = self.analyzer.extract_metadata(&path_str) {
-                    // 3. Regra de Negócio: Categorização
-                    let category = if metadata.duration_seconds > 1800 {
-                        AssetCategory::Podcast // Mais de 30 min = Podcast
-                    } else {
-                        AssetCategory::Music
-                    };
+                    // 2. Delega a regra de negócio para a Entidade do Domínio! (Clean Code)
+                    let category = AssetCategory::infer_from_metadata(&metadata);
 
                     let asset_id = Uuid::new_v5(&Uuid::NAMESPACE_URL, path_str.as_bytes());
-
                     let file_name = entry.file_name().to_string_lossy().into_owned();
 
                     let last_modified = entry
                         .metadata()
-                        .map(|m| {
-                            m.modified().map_or(0, |t| {
-                                t.duration_since(std::time::UNIX_EPOCH).unwrap().as_secs()
-                            })
+                        .ok()
+                        .and_then(|m| m.modified().ok())
+                        .map(|t| {
+                            t.duration_since(std::time::UNIX_EPOCH)
+                                .unwrap_or_default()
+                                .as_secs()
                         })
                         .unwrap_or(0);
 
@@ -69,6 +77,8 @@ impl<A: AudioAnalyzer, R: MediaRepository> ScanDirectoryUseCase<A, R> {
             }
         }
 
+        println!("Músicas encontradas: {:#?}", new_assets);
+        // Salva tudo no banco Redb via Inversão de Dependência
         self.repository.save_batch(new_assets.clone()).await?;
 
         Ok(ScanResult {

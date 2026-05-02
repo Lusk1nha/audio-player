@@ -14,10 +14,7 @@ export const LibraryAdapter = {
   scanDirectory: async (path: string): Promise<ScanResult> => {
     try {
       const rawResponse = await AudioCommands.scanLibrary(path)
-
-      console.log({ rawResponse: JSON.parse(rawResponse) })
-
-      return ScanResultSchema.parse(JSON.parse(rawResponse))
+      return ScanResultSchema.parse(rawResponse)
     } catch (error) {
       console.error("[LibraryAdapter] Falha de contrato ou IPC:", error)
       throw new Error("Falha ao processar a varredura da biblioteca.")
@@ -28,9 +25,7 @@ export const LibraryAdapter = {
     try {
       const rawResponse = await AudioCommands.getAllAssets()
 
-      const parsedAssets = z
-        .array(MediaAssetSchema)
-        .parse(JSON.parse(rawResponse))
+      const parsedAssets = z.array(MediaAssetSchema).parse(rawResponse)
 
       return parsedAssets
     } catch (error) {

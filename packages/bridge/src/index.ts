@@ -26,6 +26,10 @@ export const AudioCommands = {
     return await invoke("cmd_seek_audio", { positionSeconds })
   },
 
+  loadAudio: async (path: string, positionSeconds: number): Promise<void> => {
+    return await invoke("cmd_load_audio", { path, positionSeconds })
+  },
+
   // --- Comandos da Biblioteca ---
   getAllAssets: async (): Promise<string> => {
     return await invoke("cmd_get_all_assets")

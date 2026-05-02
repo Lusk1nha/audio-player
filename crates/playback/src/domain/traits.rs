@@ -8,4 +8,6 @@ pub trait AudioPlayer: Send + Sync {
     fn stop(&self) -> Result<(), PlaybackError>;
     fn seek(&self, position_seconds: u64) -> Result<(), PlaybackError>;
     fn set_volume(&self, volume: f32) -> Result<(), PlaybackError>;
+
+    fn load_track(&self, path: &str, position_seconds: u64) -> Result<(), PlaybackError>;
 }

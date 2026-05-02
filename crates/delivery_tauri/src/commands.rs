@@ -1,127 +1,44 @@
+use tauri::State;
+
 use library::domain::traits::MediaRepository;
 use playback::domain::traits::AudioPlayer;
 use playback::infrastructure::rodio_player::RodioAudioPlayer;
 
-use serde::Serialize;
-use tauri::State;
-
-// Importamos os nossos módulos de negócio (O "Core" da aplicação)
-use library::application::scan_directory::ScanDirectoryUseCase;
+// Importamos os nossos módulos de negócio
+use library::application::scan_directory::{ScanDirectoryUseCase, ScanResult};
+use library::domain::entities::MediaAsset;
 use library::infrastructure::fs_analyzer::LocalFileSystemAnalyzer;
 use library::infrastructure::redb_repository::RedbMediaRepository;
 
 // =========================================================================
-// DTOs (Data Transfer Objects)
+// COMMANDS DE BIBLIOTECA (Library)
 // =========================================================================
 
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AudioMetadataDto {
-    pub duration_seconds: u32,
-    pub format: String,
-    pub title: Option<String>,
-    pub artist: Option<String>,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct MediaAssetDto {
-    pub id: String,
-    pub path: String,
-    pub category: String,
-    pub metadata: AudioMetadataDto,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ScanResultDto {
-    pub scanned_files: u32,
-    pub new_assets: Vec<MediaAssetDto>,
-}
-
-// =========================================================================
-// COMMANDS (Os "Endpoints" do Tauri)
-// =========================================================================
-
-// Adicione junto com os outros comandos:
 #[tauri::command]
-pub async fn cmd_get_all_assets(repo: State<'_, RedbMediaRepository>) -> Result<String, String> {
+pub async fn cmd_get_all_assets(
+    repo: State<'_, RedbMediaRepository>,
+) -> Result<Vec<MediaAsset>, String> { // Retornamos o Vec nativo do Rust!
     println!("[Backend] Buscando todas as músicas salvas no banco...");
 
-    // 1. Busca os dados no banco usando a nossa trait do Domínio
-    let assets = repo.get_all().await?;
-
-    // 2. Mapeia para o DTO (para o JSON ficar em camelCase pro TS)
-    let dto_assets: Vec<MediaAssetDto> = assets
-        .into_iter()
-        .map(|asset| MediaAssetDto {
-            id: asset.id.to_string(),
-            path: asset.path,
-            category: asset.category.to_string(),
-            metadata: AudioMetadataDto {
-                duration_seconds: asset.metadata.duration_seconds,
-                format: asset.metadata.format,
-                title: asset.metadata.title,
-                artist: asset.metadata.artist,
-            },
-        })
-        .collect();
-
-    // 3. Devolve como String JSON
-    serde_json::to_string(&dto_assets).map_err(|e| e.to_string())
+    // O Tauri vai serializar o Vec<MediaAsset> para JSON automaticamente
+    repo.get_all().await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub async fn cmd_scan_library(
     path: String,
-    repo: State<'_, RedbMediaRepository>, // MAGIA DO TAURI: Injeção de Dependência automática!
-) -> Result<String, String> {
+    repo: State<'_, RedbMediaRepository>,
+) -> Result<ScanResult, String> { // Retornamos o ScanResult nativo!
     println!("[Backend] Iniciando varredura real na pasta: {}", path);
 
-    // 1. Instanciamos a Infraestrutura (O Leitor de Arquivos)
     let analyzer = LocalFileSystemAnalyzer;
-
-    println!("[Backend] Analisando arquivos...");
-
-    // 2. Montamos o Use Case passando o Leitor e clonando a referência do Banco de Dados
     let use_case = ScanDirectoryUseCase {
         analyzer,
         repository: (*repo).clone(),
     };
 
-    println!("[Backend] Executando regra de negócio...");
-
-    // 3. Executamos a regra de negócio real! (.await porque salvar no banco é assíncrono)
-    let result = use_case.execute(&path).await?;
-
-    println!("[Backend] Mapeando entidades para DTOs...");
-
-    // 4. Mapeamos as Entidades do Domínio (Rust puro) para os DTOs (Formato JSON pro React)
-    let dto_assets: Vec<MediaAssetDto> = result
-        .new_assets
-        .into_iter()
-        .map(|asset| MediaAssetDto {
-            id: asset.id.to_string(),
-            path: asset.path,
-            category: asset.category.to_string(),
-            metadata: AudioMetadataDto {
-                duration_seconds: asset.metadata.duration_seconds,
-                format: asset.metadata.format,
-                title: asset.metadata.title,
-                artist: asset.metadata.artist,
-            },
-        })
-        .collect();
-
-    println!("[Backend] Criando estrutura de resposta...");
-
-    let result_dto = ScanResultDto {
-        scanned_files: result.scanned_files,
-        new_assets: dto_assets,
-    };
-
-    // 5. Serializamos para JSON e enviamos de volta pelo IPC Bridge
-    serde_json::to_string(&result_dto).map_err(|e| e.to_string())
+    // Executa o caso de uso. Se der erro, mapeia para String. Se der sucesso, o Tauri vira JSON!
+    use_case.execute(&path).await.map_err(|e| e.to_string())
 }
 
 // =========================================================================
@@ -130,14 +47,11 @@ pub async fn cmd_scan_library(
 
 #[tauri::command]
 pub fn cmd_play_audio(
-    path: String, // Note: Recebemos o caminho físico do arquivo, não apenas o ID
-    player: State<'_, RodioAudioPlayer>, // Injeção de dependência automática!
+    path: String,
+    player: State<'_, RodioAudioPlayer>,
 ) -> Result<String, String> {
     println!("[Backend] Solicitado o início do áudio: {}", path);
-
-    // Chama a regra de negócio do crate playback
     player.play(&path).map_err(|e| e.to_string())?;
-
     Ok(format!("Tocando {}", path))
 }
 
@@ -172,4 +86,19 @@ pub fn cmd_seek_audio(
 pub fn cmd_set_volume(volume: f32, player: State<'_, RodioAudioPlayer>) -> Result<(), String> {
     println!("[Backend] Alterando volume para: {}", volume);
     player.set_volume(volume).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn cmd_load_audio(
+    path: String,
+    position_seconds: u64,
+    player: State<'_, RodioAudioPlayer>,
+) -> Result<(), String> {
+    println!(
+        "[Backend] Restaurando áudio silenciosamente: {} no tempo {}s",
+        path, position_seconds
+    );
+    player
+        .load_track(&path, position_seconds)
+        .map_err(|e| e.to_string())
 }

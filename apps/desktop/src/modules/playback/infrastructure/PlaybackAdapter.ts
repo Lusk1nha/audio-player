@@ -39,8 +39,6 @@ export const PlaybackAdapter = {
 
   setVolume: async (volume: number): Promise<void> => {
     try {
-      // Regra de segurança no Frontend: Garante que o volume sempre
-      // chegue no Rust entre 0.0 e 1.0
       const safeVolume = Math.max(0, Math.min(1, volume))
       await AudioCommands.setVolume(safeVolume)
     } catch (error) {
@@ -54,6 +52,14 @@ export const PlaybackAdapter = {
       await AudioCommands.seekAudio(positionSeconds)
     } catch (error) {
       console.error("Falha ao pular tempo da música:", error)
+    }
+  },
+
+  loadTrack: async (path: string, positionSeconds: number): Promise<void> => {
+    try {
+      await AudioCommands.loadAudio(path, positionSeconds)
+    } catch (error) {
+      console.error("[PlaybackAdapter] Falha ao pré-carregar áudio:", error)
     }
   },
 }

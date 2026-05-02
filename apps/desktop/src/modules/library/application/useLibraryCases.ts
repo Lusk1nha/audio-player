@@ -21,11 +21,7 @@ export function useLibraryCases() {
   // Caso de Uso 2: Escanear um novo diretório
   const { mutateAsync: scanFolder, isPending: isScanning } = useMutation({
     mutationFn: (path: string) => LibraryAdapter.scanDirectory(path),
-    onSuccess: (result) => {
-      console.log(
-        `Scan concluído: ${result.scannedFiles} arquivos encontrados.`
-      )
-
+    onSuccess: () => {
       // Invalida o cache para forçar a UI a buscar a lista atualizada do Rust
       queryClient.invalidateQueries({ queryKey: LIBRARY_KEYS.allAssets })
     },
