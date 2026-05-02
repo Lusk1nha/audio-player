@@ -5,6 +5,7 @@ import { ListIcon, XIcon, TerminalWindowIcon } from "@phosphor-icons/react"
 import { QueuePanel } from "@/modules/playback/playback/presentation/ui/QueuePanel"
 import { Sidebar } from "./components/Sidebar"
 import { StatusBar } from "./components/StatusBar"
+import { LyricsView } from "@/modules/playback/playback/presentation/ui/LyricsView"
 
 export function MainLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -47,6 +48,7 @@ export function MainLayout() {
         {/* Fila de Reprodução (Painel Direito) */}
         <div className="hidden h-full shrink-0 shadow-2xl xl:block">
           <QueuePanel />
+          <LyricsView />
         </div>
       </div>
 

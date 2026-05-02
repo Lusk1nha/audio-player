@@ -5,6 +5,7 @@ import {
   PauseIcon,
   PlayIcon,
   SkipBackIcon,
+  QuotesIcon,
 } from "@phosphor-icons/react"
 import { AnimatePresence, motion } from "motion/react"
 import { usePlayerStore } from "@/modules/playback/application/usePlayerStore"
@@ -23,10 +24,15 @@ export function PlaybackControls() {
     isPlaying,
     togglePlay,
     seekTo,
+
     currentTime,
     setCurrentTime,
+
     playPrevious,
     playNext,
+
+    isLyricsOpen,
+    toggleLyrics,
   } = usePlayerStore()
 
   const [isDragging, setIsDragging] = useState(false)
@@ -125,7 +131,11 @@ export function PlaybackControls() {
           <SkipBackIcon weight="fill" size={20} />
         </motion.button>
 
-        <motion.div className="relative" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+        <motion.div
+          className="relative"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
           <Button
             onClick={togglePlay}
             disabled={!currentTrack}
@@ -172,6 +182,17 @@ export function PlaybackControls() {
           title="Próxima [Alt+→]"
         >
           <SkipForwardIcon weight="fill" size={20} />
+        </motion.button>
+
+        <motion.button
+          whileTap={{ scale: 0.85 }}
+          onClick={toggleLyrics}
+          className={cn(
+            "transition-colors hover:text-primary",
+            isLyricsOpen ? "text-primary" : "text-muted-foreground"
+          )}
+        >
+          <QuotesIcon size={20} weight={isLyricsOpen ? "fill" : "regular"} />
         </motion.button>
       </div>
 

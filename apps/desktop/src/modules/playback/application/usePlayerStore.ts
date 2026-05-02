@@ -7,6 +7,7 @@ import { toast } from "sonner"
 
 interface PlayerState {
   currentTrack: MediaAsset | null
+  isLyricsOpen: boolean
   isPlaying: boolean
   volume: number
   queue: MediaAsset[]
@@ -36,6 +37,9 @@ interface PlayerState {
   // Ações de Navegação
   playPrevious: () => Promise<void>
   playNext: () => Promise<void>
+
+  // Ações de Letras
+  toggleLyrics: () => void
 }
 
 export const usePlayerStore = create<PlayerState>()(
@@ -43,6 +47,7 @@ export const usePlayerStore = create<PlayerState>()(
     (set, get) => ({
       currentTrack: null,
       isPlaying: false,
+      isLyricsOpen: false,
       volume: 0.7,
       queue: [],
       history: [],
@@ -212,6 +217,10 @@ export const usePlayerStore = create<PlayerState>()(
         } else {
           await stop()
         }
+      },
+
+      toggleLyrics: () => {
+        set((state) => ({ isLyricsOpen: !state.isLyricsOpen }))
       },
     }),
     {

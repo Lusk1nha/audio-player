@@ -18,7 +18,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider storageKey="audio-player-theme" defaultTheme="system">
         <RouterProvider router={router} />
-        <Toaster position="top-right" theme="dark" />
+        <Toaster position="top-right" />
       </ThemeProvider>
     </QueryClientProvider>
   )
