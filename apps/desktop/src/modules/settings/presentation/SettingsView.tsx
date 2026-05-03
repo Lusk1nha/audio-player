@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useSettingsCases } from "../application/useSettingsCases"
+import { useIntelligenceCases } from "../../intelligence/application/useIntelligenceCases"
 import type { SystemSettings } from "../domain/SystemSettings"
 import { useTheme } from "@/core/providers/theme-provider"
 import {
@@ -11,6 +12,9 @@ import {
   ToggleLeftIcon,
   ToggleRightIcon,
   WarningCircleIcon,
+  CpuIcon,
+  DownloadSimpleIcon,
+  CheckCircleIcon,
 } from "@phosphor-icons/react"
 import { Button } from "@audio-player/ui/components/button"
 import { cn } from "@audio-player/ui/lib/utils"
@@ -18,6 +22,16 @@ import { cn } from "@audio-player/ui/lib/utils"
 export function SettingsView() {
   const { settings, isFetchingSettings, updateSettings, isSaving } =
     useSettingsCases()
+
+  // --- NOVO: Hook da camada de aplicação de Inteligência ---
+  const {
+    isEngineInstalled,
+    isChecking: isCheckingAI,
+    isDownloading: isDownloadingAI,
+    downloadProgress: aiProgress,
+    startDownload: startAiDownload,
+  } = useIntelligenceCases()
+
   const { setTheme } = useTheme()
 
   const [localSettings, setLocalSettings] = useState<SystemSettings | null>(
@@ -30,7 +44,6 @@ export function SettingsView() {
     }
   }, [settings])
 
-  
   const hasChanges = JSON.stringify(localSettings) !== JSON.stringify(settings)
 
   const handleSave = async () => {
@@ -143,7 +156,6 @@ export function SettingsView() {
                         theme
                       </span>
                       <span className="text-primary">=</span>
-                      {/* Cor da String: Verde mais escuro no Light, Verde claro no Dark */}
                       <span className="text-emerald-600 dark:text-emerald-400">
                         "{localSettings.theme}"
                       </span>
@@ -188,7 +200,7 @@ export function SettingsView() {
             </section>
 
             {/* SEÇÃO: [playback] */}
-            <section className="mb-8">
+            <section className="mb-12">
               <h2 className="mb-6 text-lg font-bold text-primary">
                 <span className="mr-1 text-muted-foreground/50">[</span>
                 playback
@@ -204,7 +216,6 @@ export function SettingsView() {
                         hardware_acceleration
                       </span>
                       <span className="text-primary">=</span>
-                      {/* Cor Booleano: Roxo escuro no Light, Roxo claro no Dark */}
                       <span className="font-bold text-purple-600 dark:text-purple-400">
                         {localSettings.hardwareAcceleration ? "true" : "false"}
                       </span>
@@ -249,7 +260,6 @@ export function SettingsView() {
                         crossfade_duration_sec
                       </span>
                       <span className="text-primary">=</span>
-                      {/* Cor Numérica: Azul mais escuro no Light, Azul claro no Dark */}
                       <span className="font-bold text-blue-600 dark:text-blue-400">
                         {localSettings.crossfadeDurationSec}
                       </span>
@@ -288,6 +298,94 @@ export function SettingsView() {
                     <span className="text-[10px] text-muted-foreground uppercase">
                       10s
                     </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* SEÇÃO: [intelligence] */}
+            <section className="mb-8">
+              <h2 className="mb-6 text-lg font-bold text-primary">
+                <span className="mr-1 text-muted-foreground/50">[</span>
+                intelligence
+                <span className="ml-1 text-muted-foreground/50">]</span>
+              </h2>
+
+              <div className="flex flex-col gap-10 border-l-2 border-border/50 pl-4 sm:pl-6">
+                {/* Setting: local_ai_engine */}
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="font-semibold text-foreground">
+                        local_ai_engine
+                      </span>
+                      <span className="text-primary">=</span>
+                      {isCheckingAI ? (
+                        <span className="animate-pulse text-muted-foreground">
+                          "checking_disk..."
+                        </span>
+                      ) : isEngineInstalled ? (
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                          "installed"
+                        </span>
+                      ) : (
+                        <span className="font-bold text-amber-600 dark:text-amber-400">
+                          "missing"
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground/70">
+                      # Motor Whisper offline para transcrição de áudio e
+                      análise inteligente.
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-end">
+                    {isCheckingAI ? (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <CpuIcon size={18} className="animate-pulse" />
+                        Lendo disco...
+                      </div>
+                    ) : isEngineInstalled ? (
+                      <div className="flex items-center gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                        <CheckCircleIcon size={16} weight="fill" />
+                        Pronto para uso
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-end gap-2">
+                        <Button
+                          onClick={startAiDownload}
+                          disabled={isDownloadingAI}
+                          variant="outline"
+                          size="sm"
+                          className="gap-2 font-mono text-xs"
+                        >
+                          {isDownloadingAI ? (
+                            <CpuIcon size={16} className="animate-spin" />
+                          ) : (
+                            <DownloadSimpleIcon size={16} />
+                          )}
+                          {isDownloadingAI
+                            ? "Baixando Modelo..."
+                            : "Baixar Engine"}
+                        </Button>
+
+                        {isDownloadingAI && (
+                          <div className="flex w-36 flex-col gap-1">
+                            <div className="flex justify-between text-[10px] text-muted-foreground">
+                              <span>Progresso</span>
+                              <span>{aiProgress.toFixed(1)}%</span>
+                            </div>
+                            <div className="h-1.5 w-full overflow-hidden rounded-full border border-border/50 bg-muted/50">
+                              <div
+                                className="h-full bg-primary transition-all duration-300"
+                                style={{ width: `${aiProgress}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

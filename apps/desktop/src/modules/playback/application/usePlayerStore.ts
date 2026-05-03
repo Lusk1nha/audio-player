@@ -4,6 +4,10 @@ import { PlaybackAdapter } from "../infrastructure/PlaybackAdapter"
 import type { MediaAsset } from "@/modules/library/domain/MediaAsset"
 
 import { toast } from "sonner"
+import {
+  IntelligenceAdapter,
+  TranscriptionSegment,
+} from "@/modules/intelligence/infrastructure/IntelligenceAdapter"
 
 interface PlayerState {
   currentTrack: MediaAsset | null
@@ -13,6 +17,9 @@ interface PlayerState {
   queue: MediaAsset[]
   history: MediaAsset[]
   currentTime: number
+
+  transcripts: Record<string, TranscriptionSegment[]>
+  isTranscribing: boolean
 
   // Ações de Estado
   init: () => Promise<void>
@@ -40,6 +47,7 @@ interface PlayerState {
 
   // Ações de Letras
   toggleLyrics: () => void
+  setLyricsOpen: (open: boolean) => void
 }
 
 export const usePlayerStore = create<PlayerState>()(
@@ -52,6 +60,9 @@ export const usePlayerStore = create<PlayerState>()(
       queue: [],
       history: [],
       currentTime: 0,
+
+      transcripts: {},
+      isTranscribing: false,
 
       init: async () => {
         try {
@@ -219,8 +230,49 @@ export const usePlayerStore = create<PlayerState>()(
         }
       },
 
-      toggleLyrics: () => {
+      toggleLyrics: async () => {
+        const { isLyricsOpen, currentTrack, transcripts } = get()
+
+        // Se estiver fechado e for abrir, verificamos se precisa transcrever
+        if (!isLyricsOpen && currentTrack) {
+          const hasTranscript = transcripts[currentTrack.id] !== undefined
+
+          if (!hasTranscript) {
+            try {
+              set({ isTranscribing: true, isLyricsOpen: true }) // Abre a tela mostrando "Gerando letra..."
+
+              // Chama a IA offline!
+              const segments = await IntelligenceAdapter.transcribeAudio(
+                currentTrack.path
+              )
+
+              // Salva no cache
+              set((state) => ({
+                transcripts: {
+                  ...state.transcripts,
+                  [currentTrack.id]: segments,
+                },
+              }))
+            } catch (error) {
+              console.error("Falha ao gerar letra com IA:", error)
+              toast.error("Erro na Transcrição", {
+                description:
+                  "Certifique-se de que o motor de IA foi baixado nas configurações.",
+              })
+              set({ isLyricsOpen: false }) // Fecha se der erro
+            } finally {
+              set({ isTranscribing: false })
+            }
+            return // Sai cedo, pois o set acima já abriu a tela
+          }
+        }
+
+        // Comportamento normal de toggle se já tem a letra ou está fechando
         set((state) => ({ isLyricsOpen: !state.isLyricsOpen }))
+      },
+
+      setLyricsOpen: (open: boolean) => {
+        set({ isLyricsOpen: open })
       },
     }),
     {
@@ -233,6 +285,7 @@ export const usePlayerStore = create<PlayerState>()(
         queue: state.queue,
         history: state.history,
         currentTime: state.currentTime,
+        transcripts: state.transcripts,
       }),
     }
   )

@@ -46,7 +46,7 @@ export function MainLayout() {
         </main>
 
         {/* Fila de Reprodução (Painel Direito) */}
-        <div className="hidden h-full shrink-0 shadow-2xl xl:block">
+        <div className="h-full shrink-0 shadow-2xl xl:block">
           <QueuePanel />
           <LyricsView />
         </div>

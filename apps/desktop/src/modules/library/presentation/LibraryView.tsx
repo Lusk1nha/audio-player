@@ -5,7 +5,7 @@ import { WarningOctagonIcon } from "@phosphor-icons/react"
 
 import { usePlayerStore } from "@/modules/playback/application/usePlayerStore"
 import { useLibraryCases } from "../application/useLibraryCases"
-import { AudioCommands } from "@audio-player/bridge"
+
 import type { MediaAsset } from "@/modules/library/domain/MediaAsset"
 
 import { LibraryHeader } from "./components/LibraryHeader"
@@ -16,6 +16,7 @@ import {
   ViewMode,
 } from "./components/LibraryToolbar"
 import { VirtualizedAssetList } from "./components/VirtualizedAssetList"
+import { LibraryAdapter } from "../infrastructure/LibraryAdapter"
 
 export function LibraryView() {
   const { assets, isFetchingAssets, isScanning, scanFolder } = useLibraryCases()
@@ -81,7 +82,7 @@ export function LibraryView() {
 
   const handleSelectAndScan = async () => {
     try {
-      const selectedPath = await AudioCommands.selectFolder()
+      const selectedPath = await LibraryAdapter.selectFolder()
       if (selectedPath) {
         toast.info("Lendo arquivos da pasta...")
         await scanFolder(selectedPath)

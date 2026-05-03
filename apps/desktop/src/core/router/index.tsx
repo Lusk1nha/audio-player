@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom"
+import { createMemoryRouter } from "react-router-dom"
 import { MainLayout } from "../layouts/MainLayout"
 import { LibraryView } from "../../modules/library/presentation/LibraryView"
 
@@ -42,7 +42,7 @@ export const PlaceholderView = ({
   </div>
 )
 
-export const router = createBrowserRouter([
+export const router = createMemoryRouter([
   {
     path: "/",
     element: <MainLayout />,

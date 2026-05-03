@@ -10,12 +10,12 @@ thiserror = { workspace = true }
 
 serde = { workspace = true }
 serde_json = { workspace = true }
+tokio = { workspace = true }
+async-trait = { workspace = true }
 
 
 walkdir = "2.5.0"
 toml = "1.1.2"
 
-tokio = { version = "1.52.1", features = ["full"] }
 redb = "4.1.0"
-async-trait = "0.1.89"
 lofty = "0.24.0"

@@ -13,7 +13,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+tauri = { workspace = true }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 
@@ -25,3 +25,4 @@ serde_json = { workspace = true }
 delivery_tauri = { path = "../../../crates/delivery_tauri" }
 library = { path = "../../../crates/library" }
 playback = { path = "../../../crates/playback" }
+intelligence = { path = "../../../crates/intelligence" }

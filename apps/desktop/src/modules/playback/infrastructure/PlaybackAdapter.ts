@@ -1,9 +1,9 @@
-import { AudioCommands } from "@audio-player/bridge"
+import { PlaybackCommands } from "@audio-player/bridge"
 
 export const PlaybackAdapter = {
   playTrack: async (path: string): Promise<void> => {
     try {
-      await AudioCommands.playAudio(path)
+      await PlaybackCommands.play(path)
     } catch (error) {
       console.error("[PlaybackAdapter] Falha ao tocar áudio:", error)
       throw error
@@ -12,7 +12,7 @@ export const PlaybackAdapter = {
 
   pauseTrack: async (): Promise<void> => {
     try {
-      await AudioCommands.pauseAudio()
+      await PlaybackCommands.pause()
     } catch (error) {
       console.error("[PlaybackAdapter] Falha ao pausar áudio:", error)
       throw error
@@ -21,7 +21,7 @@ export const PlaybackAdapter = {
 
   resumeTrack: async (): Promise<void> => {
     try {
-      await AudioCommands.resumeAudio()
+      await PlaybackCommands.resume()
     } catch (error) {
       console.error("[PlaybackAdapter] Falha ao retomar áudio:", error)
       throw error
@@ -30,7 +30,7 @@ export const PlaybackAdapter = {
 
   stopTrack: async (): Promise<void> => {
     try {
-      await AudioCommands.stopAudio()
+      await PlaybackCommands.stop()
     } catch (error) {
       console.error("[PlaybackAdapter] Falha ao parar áudio:", error)
       throw error
@@ -40,7 +40,7 @@ export const PlaybackAdapter = {
   setVolume: async (volume: number): Promise<void> => {
     try {
       const safeVolume = Math.max(0, Math.min(1, volume))
-      await AudioCommands.setVolume(safeVolume)
+      await PlaybackCommands.setVolume(safeVolume)
     } catch (error) {
       console.error("[PlaybackAdapter] Falha ao alterar volume:", error)
       throw error
@@ -49,7 +49,7 @@ export const PlaybackAdapter = {
 
   seekTo: async (positionSeconds: number): Promise<void> => {
     try {
-      await AudioCommands.seekAudio(positionSeconds)
+      await PlaybackCommands.seek(positionSeconds)
     } catch (error) {
       console.error("Falha ao pular tempo da música:", error)
     }
@@ -57,7 +57,7 @@ export const PlaybackAdapter = {
 
   loadTrack: async (path: string, positionSeconds: number): Promise<void> => {
     try {
-      await AudioCommands.loadAudio(path, positionSeconds)
+      await PlaybackCommands.load(path, positionSeconds)
     } catch (error) {
       console.error("[PlaybackAdapter] Falha ao pré-carregar áudio:", error)
     }

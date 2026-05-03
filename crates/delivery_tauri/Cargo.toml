@@ -4,11 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-tauri = { version = "2", features = [] }
+tauri = { workspace = true }
 
 # Nossos módulos de negócio
 library = { path = "../library" }
 playback = { path = "../playback" }
+intelligence = { path = "../intelligence" }
 
 # Serialização para conversar com o Zod/React
 serde = { workspace = true }

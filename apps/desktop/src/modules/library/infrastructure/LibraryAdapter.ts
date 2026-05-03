@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { AudioCommands } from "@audio-player/bridge"
+import { LibraryCommands } from "@audio-player/bridge"
 import { MediaAssetSchema, type MediaAsset } from "../domain/MediaAsset"
 
 const ScanResultSchema = z.object({
@@ -13,7 +13,7 @@ export type ScanResult = z.infer<typeof ScanResultSchema>
 export const LibraryAdapter = {
   scanDirectory: async (path: string): Promise<ScanResult> => {
     try {
-      const rawResponse = await AudioCommands.scanLibrary(path)
+      const rawResponse = await LibraryCommands.scan(path)
       return ScanResultSchema.parse(rawResponse)
     } catch (error) {
       console.error("[LibraryAdapter] Falha de contrato ou IPC:", error)
@@ -21,9 +21,13 @@ export const LibraryAdapter = {
     }
   },
 
+  selectFolder: async (): Promise<string | null> => {
+    return LibraryCommands.selectFolder()
+  },
+
   getAllAssets: async (): Promise<MediaAsset[]> => {
     try {
-      const rawResponse = await AudioCommands.getAllAssets()
+      const rawResponse = await LibraryCommands.getAllAssets()
 
       const parsedAssets = z.array(MediaAssetSchema).parse(rawResponse)
 
