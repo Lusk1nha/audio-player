@@ -246,7 +246,6 @@ impl WhisperTranscriber {
 
             // 🟢 A Mágica do Karaokê: Força o Whisper a dar tempo por palavra
             params.set_token_timestamps(true);
-            params.set_max_len(1); // Força os segmentos a serem curtos (ideal para UIs de música)
 
             // Executa a IA apenas naquele pedacinho de 30s
             state
@@ -262,6 +261,7 @@ impl WhisperTranscriber {
                 let segment = state
                     .get_segment(i)
                     .expect("Falha ao ler o segmento de áudio");
+
                 let text = segment
                     .to_str_lossy()
                     .expect("Falha ao converter texto")
@@ -271,24 +271,31 @@ impl WhisperTranscriber {
                     continue;
                 }
 
-                // 3. Sincronização de Relógios (Timestamps Relativos -> Absolutos)
-                // O Whisper acha que cada chunk começa do 00:00. Precisamos somar o offset real da música.
                 let start_time = chunk_start_time + (segment.start_timestamp() as f32 / 100.0);
                 let end_time = chunk_start_time + (segment.end_timestamp() as f32 / 100.0);
 
-                // 4. A Lógica de Deduplicação (Anti-Repetição)
-                // Se a palavra lida caiu na zona final de "overlap" (os últimos 2 segundos do chunk)
-                // E não é o último chunk da música, nós IGNORAMOS.
-                // Ela será transcrita corretamente (e sem ser cortada) no início do próximo chunk.
+                // Lógica do overlap mantida...
                 let is_last_chunk = end_sample == pcm_data.len();
                 if !is_last_chunk && (start_time - chunk_start_time) > stride_sec as f32 {
                     continue;
                 }
 
+                /*
+                   Opcional: Se você precisa do tempo de cada palavra para o UI de Karaokê,
+                   você pode iterar sobre os tokens deste segmento exato:
+
+                   let num_tokens = state.full_n_tokens(i)?;
+                   for t in 0..num_tokens {
+                       let token_data = state.full_get_token_data(i, t)?;
+                       // Aqui você tem token_data.t0 (início) e token_data.t1 (fim) para CADA token,
+                       // sem quebrar a frase principal!
+                   }
+                */
+
                 all_segments.push(TranscriptionSegment {
                     start_time,
                     end_time,
-                    text: text.trim().to_string(),
+                    text: text.trim().to_string(), // Agora isso será uma frase natural e coesa
                 });
             }
 

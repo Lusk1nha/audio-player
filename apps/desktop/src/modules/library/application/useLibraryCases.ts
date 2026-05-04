@@ -1,12 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { LibraryAdapter } from "../infrastructure/LibraryAdapter"
-import type { MediaAsset } from "../domain/MediaAsset"
+import type { MediaAsset, SortOption, SortOrder } from "../domain/MediaAsset"
 
+// Ampliamos as chaves para incluir os parâmetros de busca
 export const LIBRARY_KEYS = {
-  allAssets: ["library", "assets"] as const,
+  search: (query: string, sortBy: string, sortOrder: string) =>
+    ["library", "assets", query, sortBy, sortOrder] as const,
 }
 
-export function useLibraryCases() {
+export function useLibraryCases(
+  searchQuery: string = "",
+  sortBy: SortOption = "name",
+  sortOrder: SortOrder = "asc"
+) {
   const queryClient = useQueryClient()
 
   const {
@@ -14,16 +20,16 @@ export function useLibraryCases() {
     isLoading: isFetchingAssets,
     error: fetchError,
   } = useQuery<MediaAsset[]>({
-    queryKey: LIBRARY_KEYS.allAssets,
-    queryFn: LibraryAdapter.getAllAssets,
+    queryKey: LIBRARY_KEYS.search(searchQuery, sortBy, sortOrder),
+    queryFn: () => LibraryAdapter.searchAssets(searchQuery, sortBy, sortOrder),
+
+    staleTime: 1000 * 60 * 5, // Cache de 5 minutos
   })
 
-  // Caso de Uso 2: Escanear um novo diretório
   const { mutateAsync: scanFolder, isPending: isScanning } = useMutation({
     mutationFn: (path: string) => LibraryAdapter.scanDirectory(path),
     onSuccess: () => {
-      // Invalida o cache para forçar a UI a buscar a lista atualizada do Rust
-      queryClient.invalidateQueries({ queryKey: LIBRARY_KEYS.allAssets })
+      queryClient.invalidateQueries({ queryKey: ["library", "assets"] })
     },
   })
 
@@ -31,7 +37,6 @@ export function useLibraryCases() {
     assets,
     isFetchingAssets,
     fetchError,
-
     scanFolder,
     isScanning,
   }

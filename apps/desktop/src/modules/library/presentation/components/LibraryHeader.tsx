@@ -37,14 +37,16 @@ export function LibraryHeader({
         </div>
 
         <motion.button
-          whileTap={isScanning ? {} : { scale: 0.95 }}
+          whileTap={{ scale: 0.95 }} // Sempre permite animação de clique
           onClick={onScanClick}
-          disabled={isScanning}
+          // Propriedade disabled removida para permitir cliques a qualquer momento
           className={cn(
-            "inline-flex h-10 w-full items-center justify-center gap-x-2 rounded-md px-6 py-2 font-mono text-sm font-medium shadow-sm transition-all focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:w-auto",
+            "inline-flex h-10 w-full items-center justify-center gap-x-2 rounded-md px-6 py-2 font-mono text-sm font-medium shadow-sm transition-all focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none sm:w-auto",
             isScanning
-              ? "border border-border bg-muted text-muted-foreground"
-              : "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(var(--color-primary),0.3)]"
+              ? // Visual ativo alternativo (secundário) durante a busca para mostrar que ainda é clicável
+                "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              : // Visual primário padrão
+                "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(var(--color-primary),0.3)]"
           )}
         >
           {isScanning ? (

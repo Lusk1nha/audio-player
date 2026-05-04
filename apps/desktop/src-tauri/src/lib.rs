@@ -19,6 +19,7 @@ pub fn run() {
             // commands library
             library_commands::cmd_scan_library,
             library_commands::cmd_get_all_assets,
+            library_commands::cmd_search_assets,
             // commands playback
             playback_commands::cmd_play_audio,
             playback_commands::cmd_pause_audio,

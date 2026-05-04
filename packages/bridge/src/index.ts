@@ -34,6 +34,14 @@ export const LibraryCommands = {
     })
     return selectedPath as string | null
   },
+
+  searchAssets: async (
+    query: string,
+    sortBy: string,
+    sortOrder: string
+  ): Promise<string> => {
+    return invoke("cmd_search_assets", { query, sortBy, sortOrder })
+  },
 }
 
 // --- Domínio de IA e Transcrição (Intelligence) ---

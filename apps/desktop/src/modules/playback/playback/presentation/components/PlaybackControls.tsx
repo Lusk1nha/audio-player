@@ -60,6 +60,17 @@ export function PlaybackControls() {
     return () => clearInterval(interval)
   }, [isPlaying, isDragging, currentTrack, currentTime, setCurrentTime])
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        e.preventDefault()
+        togglePlay()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [togglePlay])
+
   const formatTime = (seconds?: number) => {
     if (!seconds || isNaN(seconds)) return "0:00"
     return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`

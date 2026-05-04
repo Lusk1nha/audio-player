@@ -53,7 +53,7 @@ export function MainLayout() {
       </div>
 
       {/* Rodapé (Player + Status) */}
-      <footer className="relative z-10 shrink-0 border-t border-border bg-card shadow-[0_-10px_30px_rgba(0,0,0,0.1)]">
+      <footer className="relative z-10 flex flex-col shrink-0 border-t border-border bg-card shadow-[0_-10px_30px_rgba(0,0,0,0.1)]">
         <PlayerBar />
         <StatusBar />
       </footer>

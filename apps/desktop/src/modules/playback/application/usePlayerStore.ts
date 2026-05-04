@@ -47,6 +47,7 @@ interface PlayerState {
 
   // Ações de Letras
   toggleLyrics: () => void
+  retranscribeAudio: () => Promise<void>
   setLyricsOpen: (open: boolean) => void
 }
 
@@ -269,6 +270,33 @@ export const usePlayerStore = create<PlayerState>()(
 
         // Comportamento normal de toggle se já tem a letra ou está fechando
         set((state) => ({ isLyricsOpen: !state.isLyricsOpen }))
+      },
+
+      retranscribeAudio: async () => {
+        const { currentTrack } = get()
+        if (!currentTrack) return
+
+        try {
+          set({ isTranscribing: true, isLyricsOpen: true })
+
+          const segments = await IntelligenceAdapter.transcribeAudio(
+            currentTrack.path
+          )
+
+          set((state) => ({
+            transcripts: {
+              ...state.transcripts,
+              [currentTrack.id]: segments,
+            },
+          }))
+
+          toast.success("Transcrição atualizada!")
+        } catch (error) {
+          console.error("Falha ao re-transcrever:", error)
+          toast.error("Erro na Transcrição")
+        } finally {
+          set({ isTranscribing: false })
+        }
       },
 
       setLyricsOpen: (open: boolean) => {

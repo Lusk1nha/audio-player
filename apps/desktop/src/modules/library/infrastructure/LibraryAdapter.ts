@@ -37,4 +37,23 @@ export const LibraryAdapter = {
       return []
     }
   },
+
+  searchAssets: async (
+    query: string,
+    sortBy: string,
+    sortOrder: string
+  ): Promise<MediaAsset[]> => {
+    try {
+      const rawResponse = await LibraryCommands.searchAssets(
+        query,
+        sortBy,
+        sortOrder
+      )
+      
+      return MediaAssetSchema.array().parse(rawResponse)
+    } catch (error) {
+      console.error("[LibraryAdapter] Falha ao buscar assets do banco:", error)
+      return []
+    }
+  },
 }

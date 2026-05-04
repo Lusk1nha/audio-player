@@ -8,8 +8,8 @@ import {
   XCircleIcon,
 } from "@phosphor-icons/react"
 import { cn } from "@audio-player/ui/lib/utils"
+import type { SortOption, SortOrder } from "../../domain/MediaAsset"
 
-export type SortOption = "name" | "artist" | "recent"
 export type ViewMode = "grid" | "list"
 
 interface LibraryToolbarProps {
@@ -17,8 +17,8 @@ interface LibraryToolbarProps {
   onSearchChange: (val: string) => void
   sortBy: SortOption
   onSortByChange: (val: SortOption) => void
-  sortOrder: "asc" | "desc"
-  onSortOrderChange: (val: "asc" | "desc") => void
+  sortOrder: SortOrder
+  onSortOrderChange: (val: SortOrder) => void
   viewMode: ViewMode
   onViewModeChange: (val: ViewMode) => void
 }
@@ -66,8 +66,9 @@ export function LibraryToolbar({
             className="hidden text-muted-foreground sm:block"
           />
           <div className="flex items-center gap-1 rounded border border-border/50 bg-card p-1 shadow-sm">
-            {(["name", "artist", "recent"] as SortOption[]).map((opt) => (
-              <button
+            {(["name", "artist", "duration", "recent"] as SortOption[]).map(
+              (opt) => (
+                <button
                 key={opt}
                 onClick={() => onSortByChange(opt)}
                 className={cn(
@@ -81,7 +82,9 @@ export function LibraryToolbar({
                   ? "Nome"
                   : opt === "artist"
                     ? "Artista"
-                    : "Recentes"}
+                    : opt === "duration"
+                      ? "Duração"
+                      : "Recentes"}
               </button>
             ))}
           </div>

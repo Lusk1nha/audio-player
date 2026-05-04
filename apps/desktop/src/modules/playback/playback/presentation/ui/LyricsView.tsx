@@ -9,6 +9,7 @@ import {
   TextAaIcon,
   SpeakerHighIcon,
   PlayCircleIcon,
+  ArrowsClockwiseIcon,
 } from "@phosphor-icons/react"
 
 export function LyricsView() {
@@ -20,6 +21,7 @@ export function LyricsView() {
     isTranscribing,
     seekTo,
     setLyricsOpen, // Assumindo que você tem essa ação no store para fechar o painel
+    retranscribeAudio
   } = usePlayerStore()
 
   // Guardamos as referências de cada linha da letra para o scroll nativo do React
@@ -71,13 +73,31 @@ export function LyricsView() {
               // Transcrição_Ativa
             </span>
           </div>
-          <button
-            onClick={() => setLyricsOpen?.(false)}
-            className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-            title="Fechar Letras (Esc)"
-          >
-            <XIcon size={24} />
-          </button>
+
+          <div className="flex items-center gap-2">
+            {/* Botão de Transcrever Novamente */}
+            {!isTranscribing && currentTranscript.length > 0 && (
+              <button
+                onClick={() => retranscribeAudio?.()}
+                className="flex items-center gap-2 rounded-md px-3 py-2 text-xs font-bold tracking-tighter text-muted-foreground uppercase transition-colors hover:bg-primary/10 hover:text-primary"
+                title="Gerar transcrição novamente com IA"
+              >
+                <ArrowsClockwiseIcon
+                  size={18}
+                  weight="bold"
+                  className={isTranscribing ? "animate-spin" : ""}
+                />
+                <span className="hidden sm:inline">Regerar_IA</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => setLyricsOpen?.(false)}
+              className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+            >
+              <XIcon size={24} />
+            </button>
+          </div>
         </div>
 
         {/* --- ÁREA PRINCIPAL --- */}
@@ -197,7 +217,7 @@ export function LyricsView() {
         </div>
 
         {/* Gradiente inferior para esconder o corte seco do texto rolando */}
-        <div className="pointer-events-none absolute bottom-0 left-0 h-32 w-full bg-gradient-to-t from-background/95 to-transparent" />
+        <div className="pointer-events-none absolute bottom-0 left-0 h-32 w-full bg-linear-to-t from-background/95 to-transparent" />
       </motion.div>
     </AnimatePresence>
   )

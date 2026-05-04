@@ -1,6 +1,6 @@
 use library::application::scan_directory::{ScanDirectoryUseCase, ScanResult};
 use library::domain::entities::MediaAsset;
-use library::domain::traits::MediaRepository;
+use library::domain::traits::{MediaRepository, SortBy, SortOrder};
 use library::infrastructure::fs_analyzer::LocalFileSystemAnalyzer;
 use library::infrastructure::redb_repository::RedbMediaRepository;
 use tauri::State;
@@ -25,4 +25,16 @@ pub async fn cmd_scan_library(
         repository: (*repo).clone(),
     };
     use_case.execute(&path).await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn cmd_search_assets(
+    query: String,
+    sort_by: SortBy,
+    sort_order: SortOrder,
+    repo: State<'_, RedbMediaRepository>,
+) -> Result<Vec<MediaAsset>, String> {
+    repo.search(&query, sort_by, sort_order)
+        .await
+        .map_err(|e| e.to_string())
 }

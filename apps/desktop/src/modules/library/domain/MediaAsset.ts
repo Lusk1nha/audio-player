@@ -1,5 +1,8 @@
 import { z } from "zod"
 
+export type SortOption = "name" | "artist" | "recent" | "duration"
+export type SortOrder = "asc" | "desc"
+
 export const AudioMetadataSchema = z.object({
   durationSeconds: z.number().nonnegative(),
   format: z.string(),
